@@ -43,12 +43,11 @@ function Login() {
   };
 
   return (
+
     <div style={{ maxWidth: "400px", margin: "80px auto", padding: "30px",
       background: "rgba(0,0,0,0.25)", borderRadius: "16px", color: "white" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "8px" }}>🎾</h1>
-      <h2 style={{ textAlign: "center", marginBottom: "24px" }}>
-        Circolo Tennis Sant'Agata
-      </h2>
+      <img src="/logo_ASD_Circolo_Tennis.jpeg" alt="Logo Circolo Tennis Sant'Agata"
+        style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
       <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
         {isRegister ? "Registrati" : "Accedi"}
       </h3>

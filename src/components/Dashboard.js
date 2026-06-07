@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } from "firebase/firestore";
 
 const ORARI = [];
 for (let h = 8; h < 24; h++) {
   ORARI.push(`${String(h).padStart(2,"0")}:00`);
   ORARI.push(`${String(h).padStart(2,"0")}:30`);
 }
+
+const getFine = (ora) => {
+  const [h, m] = ora.split(":").map(Number);
+  const fine = m === 30 ? `${String(h+1).padStart(2,"0")}:00` : `${String(h).padStart(2,"0")}:30`;
+  return fine;
+};
 
 function Dashboard({ user, onLogout }) {
   const [campo, setCampo] = useState("Campo 1");
@@ -27,17 +33,18 @@ function Dashboard({ user, onLogout }) {
       where("data", "==", data)
     );
     const snapshot = await getDocs(q);
-    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     setPrenotazioni(list);
     setLoading(false);
   };
 
   const prenota = async (ora) => {
-    const nome = user.displayName || user.email;
+    const userDoc = await getDoc(doc(db, "utenti", user.uid));
+    const username = userDoc.exists() ? userDoc.data().username : user.email;
     await addDoc(collection(db, "prenotazioni"), {
       userId: user.uid,
       email: user.email,
-      nome,
+      nome: username,
       campo,
       data,
       ora,
@@ -83,17 +90,39 @@ function Dashboard({ user, onLogout }) {
           {ORARI.map(ora => {
             const slot = getSlot(ora);
             const mio = slot && slot.userId === user.uid;
+            const prenotato = !!slot;
+
             return (
               <div key={ora} style={{
-                display: "flex", alignItems: "center", gap: "10px",
-                background: slot ? (mio ? "#2d7a2d" : "#7a2d2d") : "rgba(255,255,255,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                background: prenotato ? (mio ? "#2d7a2d" : "#7a2d2d") : "rgba(255,255,255,0.15)",
                 borderRadius: "10px", padding: "10px 14px",
-                cursor: slot ? (mio ? "pointer" : "default") : "pointer"
-              }}
-                onClick={() => { if (!slot) prenota(ora); else if (mio) cancella(slot.id); }}
-              >
-                <span style={{ fontWeight: "bold", minWidth: "50px" }}>{ora}</span>
-                <span>{slot ? `👤 ${slot.nome}${mio ? " (tocca per cancellare)" : ""}` : "Libero — tocca per prenotare"}</span>
+              }}>
+                {/* Orario */}
+                <span style={{ fontWeight: "bold", minWidth: "110px", fontSize: "15px" }}>
+                  {ora} - {getFine(ora)}
+                </span>
+
+                {/* Nome socio */}
+                <span style={{ flex: 1, paddingLeft: "10px", fontSize: "14px" }}>
+                  {slot ? `👤 ${slot.nome}` : ""}
+                </span>
+
+                {/* Checkbox */}
+                <div
+                  onClick={() => { if (!prenotato) prenota(ora); else if (mio) cancella(slot.id); }}
+                  style={{
+                    width: "24px", height: "24px", borderRadius: "6px", border: "2px solid white",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: prenotato && !mio ? "default" : "pointer",
+                    background: prenotato ? "white" : "transparent",
+                    flexShrink: 0
+                  }}
+                >
+                  {prenotato && (
+                    <span style={{ color: mio ? "#2d7a2d" : "#7a2d2d", fontWeight: "bold", fontSize: "16px" }}>✓</span>
+                  )}
+                </div>
               </div>
             );
           })}

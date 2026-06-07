@@ -11,6 +11,7 @@ function Dashboard({ user, onLogout }) {
 
   useEffect(() => {
     loadPrenotazioni();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPrenotazioni = async () => {

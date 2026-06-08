@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
 function Login() {
@@ -11,7 +11,7 @@ function Login() {
   const [username, setUsername] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
-  const [popup, setPopup] = useState(null); // "registrato" | "nonVerificato"
+  const [popup, setPopup] = useState(null);
 
   const handleSubmit = async () => {
     setError("");
@@ -23,18 +23,26 @@ function Login() {
         }
         auth.languageCode = "it";
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(cred.user, {
-          url: "https://circolo-tennis-chi.vercel.app"
-        });
+
+        // Logout IMMEDIATO
+        await signOut(auth);
+
+        // Salva dati utente
         await setDoc(doc(db, "utenti", cred.user.uid), {
           nome, cognome, username, email, createdAt: new Date()
         });
-        await auth.signOut();
+
+        // Manda email di verifica
+        await sendEmailVerification(cred.user, {
+          url: "https://circolo-tennis-chi.vercel.app"
+        });
+
         setPopup("registrato");
+
       } else {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         if (!cred.user.emailVerified) {
-          await auth.signOut();
+          await signOut(auth);
           setPopup("nonVerificato");
           return;
         }
@@ -63,8 +71,10 @@ function Login() {
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "80px auto", padding: "30px",
-      background: "rgba(0,0,0,0.25)", borderRadius: "16px", color: "white" }}>
+    <div style={{
+      maxWidth: "400px", margin: "80px auto", padding: "30px",
+      background: "rgba(0,0,0,0.25)", borderRadius: "16px", color: "white"
+    }}>
 
       {/* Popup registrazione completata */}
       {popup === "registrato" && (
@@ -74,6 +84,7 @@ function Login() {
             <p>Abbiamo inviato una email di conferma a:</p>
             <p style={{ fontWeight: "bold", color: "#ffdd88" }}>{email}</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi accedi.</p>
+            <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
             <button onClick={() => { setPopup(null); setIsRegister(false); }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",

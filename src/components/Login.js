@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { auth, db } from "../firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
 function Login() {
@@ -11,9 +11,11 @@ function Login() {
   const [username, setUsername] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleSubmit = async () => {
     setError("");
+    setSuccess("");
     try {
       if (isRegister) {
         if (!nome || !cognome || !username) {
@@ -21,6 +23,7 @@ function Login() {
           return;
         }
         const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await sendEmailVerification(cred.user);
         await setDoc(doc(db, "utenti", cred.user.uid), {
           nome,
           cognome,
@@ -28,8 +31,16 @@ function Login() {
           email,
           createdAt: new Date()
         });
+        await auth.signOut();
+        setSuccess("✅ Registrazione completata! Controlla la tua email e clicca il link di verifica prima di accedere.");
+        setIsRegister(false);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        if (!cred.user.emailVerified) {
+          await auth.signOut();
+          setError("⚠️ Email non verificata. Controlla la tua casella email e clicca il link di verifica.");
+          return;
+        }
       }
     } catch (err) {
       setError(err.message);
@@ -43,11 +54,11 @@ function Login() {
   };
 
   return (
-
     <div style={{ maxWidth: "400px", margin: "80px auto", padding: "30px",
       background: "rgba(0,0,0,0.25)", borderRadius: "16px", color: "white" }}>
-      <img src="/logo_ASD_Circolo_Tennis.jpeg" alt="Logo Circolo Tennis Sant'Agata"
-        style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
+
+      <img src="/logo.jpeg" alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
+
       <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
         {isRegister ? "Registrati" : "Accedi"}
       </h3>
@@ -64,6 +75,7 @@ function Login() {
       <input type="password" placeholder="Password (min. 6 caratteri)" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} />
 
       {error && <p style={{ color: "#ffcccc", fontSize: "13px" }}>{error}</p>}
+      {success && <p style={{ color: "#ccffcc", fontSize: "13px" }}>{success}</p>}
 
       <button onClick={handleSubmit} style={{
         width: "100%", padding: "12px", background: "white", color: "#bb5522",
@@ -74,7 +86,7 @@ function Login() {
 
       <p style={{ textAlign: "center", marginTop: "16px" }}>
         {isRegister ? "Hai già un account?" : "Non hai un account?"}
-        <span onClick={() => { setIsRegister(!isRegister); setError(""); }}
+        <span onClick={() => { setIsRegister(!isRegister); setError(""); setSuccess(""); }}
           style={{ color: "white", fontWeight: "bold", cursor: "pointer", marginLeft: "6px", textDecoration: "underline" }}>
           {isRegister ? "Accedi" : "Registrati"}
         </span>

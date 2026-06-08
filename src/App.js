@@ -9,14 +9,19 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser && !currentUser.emailVerified) {
+        await signOut(auth);
+        setUser(null);
+      } else {
+        setUser(currentUser);
+      }
       setLoading(false);
     });
     return unsubscribe;
   }, []);
 
-  if (loading) return <div>Caricamento...</div>;
+  if (loading) return <div style={{ color: "white", textAlign: "center", marginTop: "100px" }}>Caricamento...</div>;
 
   return (
     <div>

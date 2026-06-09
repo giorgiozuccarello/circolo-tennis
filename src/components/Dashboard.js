@@ -33,6 +33,33 @@ const getFrecciaVento = (gradi) => {
   return direzioni[index];
 };
 
+const Lampadina = ({ accesa }) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill={accesa ? "#FFD700" : "#888888"}>
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26C17.81 13.47 19 11.38 19 9c0-3.87-3.13-7-7-7zm-1 16h2v1h-2v-1zm3-2H10v-1h4v1z"/>
+  </svg>
+);
+
+// Trova la previsione più vicina all'ora richiesta
+const getMeteoPerOra = (forecast, dataSelezionata, ora) => {
+  if (!forecast || forecast.length === 0) return null;
+  const [h] = ora.split(":").map(Number);
+  const target = new Date(`${dataSelezionata}T${String(h).padStart(2,"0")}:00:00`);
+  
+  let closest = null;
+  let minDiff = Infinity;
+  
+  forecast.forEach(item => {
+    const itemDate = new Date(item.dt * 1000);
+    const diff = Math.abs(itemDate - target);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = item;
+    }
+  });
+  
+  return closest;
+};
+
 function Dashboard({ user, onLogout }) {
   const [campo, setCampo] = useState("Campo 1");
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
@@ -40,11 +67,11 @@ function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [conferma, setConferma] = useState(null);
   const [nomeUtente, setNomeUtente] = useState("");
-  const [meteo, setMeteo] = useState(null);
+  const [forecast, setForecast] = useState([]);
 
   useEffect(() => {
     caricaNome();
-    caricaMeteo();
+    caricaForecast();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -58,20 +85,15 @@ function Dashboard({ user, onLogout }) {
     if (userDoc.exists()) setNomeUtente(userDoc.data().nome);
   };
 
-  const caricaMeteo = async () => {
+  const caricaForecast = async () => {
     try {
       const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=Sant%27Agata+di+Militello,IT&appid=f77cafddcb5fed6bfba7a452f0585f34&units=metric`
+        `https://api.openweathermap.org/data/2.5/forecast?q=Sant%27Agata+di+Militello,IT&appid=f77cafddcb5fed6bfba7a452f0585f34&units=metric`
       );
       const json = await res.json();
-      setMeteo({
-        id: json.weather[0].id,
-        temp: Math.round(json.main.temp),
-        vento: Math.round(json.wind.speed * 3.6),
-        direzione: json.wind.deg
-      });
+      setForecast(json.list || []);
     } catch (e) {
-      console.log("Errore meteo:", e);
+      console.log("Errore forecast:", e);
     }
   };
 
@@ -166,18 +188,10 @@ function Dashboard({ user, onLogout }) {
         <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
       </div>
 
-      {/* Nome utente + meteo */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-        <p style={{ margin: 0, fontSize: "16px" }}>
-          Benvenuto, <strong>{nomeUtente}</strong>!
-        </p>
-        {meteo && (
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "15px" }}>
-            <span>{getMeteoIcona(meteo.id)} {meteo.temp}°C</span>
-            <span>{getFrecciaVento(meteo.direzione)} {meteo.vento}km/h</span>
-          </div>
-        )}
-      </div>
+      {/* Nome utente */}
+      <p style={{ textAlign: "center", fontSize: "16px", marginBottom: "16px" }}>
+        Benvenuto, <strong>{nomeUtente}</strong>!
+      </p>
 
       {/* Selettore Campo */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
@@ -198,8 +212,8 @@ function Dashboard({ user, onLogout }) {
 
       {/* Legenda icone */}
       <div style={{ display: "flex", gap: "16px", fontSize: "12px", marginBottom: "10px", opacity: 0.8 }}>
-        <span>{getMeteoIcona(meteo?.id)} Meteo</span>
-        <span>{getFrecciaVento(meteo?.direzione)} Vento</span>
+        <span>⛅ Meteo</span>
+        <span>→ Vento</span>
         <span>💡 Luce</span>
       </div>
 
@@ -212,6 +226,7 @@ function Dashboard({ user, onLogout }) {
             const prenotato = !!slot;
             const h = parseInt(ora.split(":")[0]);
             const luceAccesa = h >= 20;
+            const meteoOra = getMeteoPerOra(forecast, data, ora);
 
             return (
               <div key={ora} onClick={() => handleClick(ora, slot, mio)} style={{
@@ -223,17 +238,17 @@ function Dashboard({ user, onLogout }) {
               }}>
                 {/* Icona Meteo */}
                 <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
-                  {meteo ? getMeteoIcona(meteo.id) : "⛅"}
+                  {meteoOra ? getMeteoIcona(meteoOra.weather[0].id) : "⛅"}
                 </span>
 
                 {/* Icona Vento */}
                 <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
-                  {meteo ? getFrecciaVento(meteo.direzione) : "→"}
+                  {meteoOra ? getFrecciaVento(meteoOra.wind.deg) : "→"}
                 </span>
 
                 {/* Icona Luce */}
-                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
-                  {luceAccesa ? "💡" : "🔦"}
+                <span style={{ minWidth: "24px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Lampadina accesa={luceAccesa} />
                 </span>
 
                 {/* Spazio separatore */}

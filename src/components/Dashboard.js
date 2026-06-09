@@ -13,6 +13,26 @@ const getFine = (ora) => {
   return m === 30 ? `${String(h+1).padStart(2,"0")}:00` : `${String(h).padStart(2,"0")}:30`;
 };
 
+const getMeteoIcona = (weatherId) => {
+  if (!weatherId) return "⛅";
+  if (weatherId >= 200 && weatherId < 300) return "⛈️";
+  if (weatherId >= 300 && weatherId < 400) return "🌦️";
+  if (weatherId >= 500 && weatherId < 600) return "🌧️";
+  if (weatherId >= 600 && weatherId < 700) return "❄️";
+  if (weatherId >= 700 && weatherId < 800) return "🌫️";
+  if (weatherId === 800) return "☀️";
+  if (weatherId === 801) return "🌤️";
+  if (weatherId === 802) return "⛅";
+  return "🌥️";
+};
+
+const getFrecciaVento = (gradi) => {
+  if (gradi === null || gradi === undefined) return "→";
+  const direzioni = ["↓","↙","←","↖","↑","↗","→","↘"];
+  const index = Math.round(gradi / 45) % 8;
+  return direzioni[index];
+};
+
 function Dashboard({ user, onLogout }) {
   const [campo, setCampo] = useState("Campo 1");
   const [data, setData] = useState(new Date().toISOString().split("T")[0]);
@@ -20,9 +40,11 @@ function Dashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [conferma, setConferma] = useState(null);
   const [nomeUtente, setNomeUtente] = useState("");
+  const [meteo, setMeteo] = useState(null);
 
   useEffect(() => {
     caricaNome();
+    caricaMeteo();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -33,8 +55,23 @@ function Dashboard({ user, onLogout }) {
 
   const caricaNome = async () => {
     const userDoc = await getDoc(doc(db, "utenti", user.uid));
-    if (userDoc.exists()) {
-      setNomeUtente(userDoc.data().nome);
+    if (userDoc.exists()) setNomeUtente(userDoc.data().nome);
+  };
+
+  const caricaMeteo = async () => {
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=Sant%27Agata+di+Militello,IT&appid=f77cafddcb5fed6bfba7a452f0585f34&units=metric`
+      );
+      const json = await res.json();
+      setMeteo({
+        id: json.weather[0].id,
+        temp: Math.round(json.main.temp),
+        vento: Math.round(json.wind.speed * 3.6),
+        direzione: json.wind.deg
+      });
+    } catch (e) {
+      console.log("Errore meteo:", e);
     }
   };
 
@@ -58,9 +95,7 @@ function Dashboard({ user, onLogout }) {
       userId: user.uid,
       email: user.email,
       nome: cognome,
-      campo,
-      data,
-      ora,
+      campo, data, ora,
       createdAt: new Date()
     });
     loadPrenotazioni();
@@ -131,10 +166,18 @@ function Dashboard({ user, onLogout }) {
         <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
       </div>
 
-      {/* Nome utente loggato */}
-      <p style={{ textAlign: "center", fontSize: "16px", marginBottom: "16px" }}>
-        Benvenuto, <strong>{nomeUtente}</strong>!
-      </p>
+      {/* Nome utente + meteo */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <p style={{ margin: 0, fontSize: "16px" }}>
+          Benvenuto, <strong>{nomeUtente}</strong>!
+        </p>
+        {meteo && (
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", fontSize: "15px" }}>
+            <span>{getMeteoIcona(meteo.id)} {meteo.temp}°C</span>
+            <span>{getFrecciaVento(meteo.direzione)} {meteo.vento}km/h</span>
+          </div>
+        )}
+      </div>
 
       {/* Selettore Campo */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>
@@ -153,6 +196,13 @@ function Dashboard({ user, onLogout }) {
         style={{ width: "100%", padding: "10px", borderRadius: "10px", border: "none",
           fontSize: "16px", marginBottom: "16px", boxSizing: "border-box" }} />
 
+      {/* Legenda icone */}
+      <div style={{ display: "flex", gap: "16px", fontSize: "12px", marginBottom: "10px", opacity: 0.8 }}>
+        <span>{getMeteoIcona(meteo?.id)} Meteo</span>
+        <span>{getFrecciaVento(meteo?.direzione)} Vento</span>
+        <span>💡 Luce</span>
+      </div>
+
       {/* Colonna Orari */}
       {loading ? <p>Caricamento...</p> : (
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -160,20 +210,46 @@ function Dashboard({ user, onLogout }) {
             const slot = getSlot(ora);
             const mio = slot && slot.userId === user.uid;
             const prenotato = !!slot;
+            const h = parseInt(ora.split(":")[0]);
+            const luceAccesa = h >= 20;
 
             return (
               <div key={ora} onClick={() => handleClick(ora, slot, mio)} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
+                display: "flex", alignItems: "center",
                 background: prenotato ? (mio ? "#2d7a2d" : "#7a2d2d") : "rgba(255,255,255,0.15)",
                 borderRadius: "10px", padding: "10px 14px",
-                cursor: prenotato && !mio ? "default" : "pointer"
+                cursor: prenotato && !mio ? "default" : "pointer",
+                gap: "6px"
               }}>
-                <span style={{ fontWeight: "bold", minWidth: "120px", fontSize: "15px" }}>
+                {/* Icona Meteo */}
+                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
+                  {meteo ? getMeteoIcona(meteo.id) : "⛅"}
+                </span>
+
+                {/* Icona Vento */}
+                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
+                  {meteo ? getFrecciaVento(meteo.direzione) : "→"}
+                </span>
+
+                {/* Icona Luce */}
+                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
+                  {luceAccesa ? "💡" : "🔦"}
+                </span>
+
+                {/* Spazio separatore */}
+                <span style={{ minWidth: "14px" }} />
+
+                {/* Orario */}
+                <span style={{ fontWeight: "bold", minWidth: "110px", fontSize: "15px" }}>
                   {ora} - {getFine(ora)}
                 </span>
-                <span style={{ flex: 1, paddingLeft: "10px", fontSize: "14px" }}>
-                  {slot ? `👤 ${slot.nome}` : ""}
+
+                {/* Nome socio con racchetta */}
+                <span style={{ flex: 1, fontSize: "14px" }}>
+                  {slot ? `🎾 ${slot.nome}` : ""}
                 </span>
+
+                {/* Checkbox */}
                 <div style={{
                   width: "24px", height: "24px", borderRadius: "6px", border: "2px solid white",
                   display: "flex", alignItems: "center", justifyContent: "center",

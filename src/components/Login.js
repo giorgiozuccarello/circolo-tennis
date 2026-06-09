@@ -92,11 +92,11 @@ function Login({ onRegistrando }) {
             <p style={{ fontWeight: "bold", color: "#ffdd88" }}>{email}</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi accedi.</p>
             <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
-            <button onClick={() => { setPopup(null); setIsRegister(false); }} style={{
+            <button onClick={() => { setPopup(null); setIsRegister(false); setEmail(""); setPassword(""); setNome(""); setCognome(""); setUsername(""); }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",
               fontWeight: "bold", cursor: "pointer", fontSize: "15px"
-            }}>OK, vai al login</button>
+            }}>Torna al Login</button>
           </div>
         </div>
       )}

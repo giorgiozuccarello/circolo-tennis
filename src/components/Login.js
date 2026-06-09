@@ -13,6 +13,15 @@ function Login({ onRegistrando }) {
   const [error, setError] = useState("");
   const [popup, setPopup] = useState(null);
 
+  const resetCampi = () => {
+    setEmail("");
+    setPassword("");
+    setNome("");
+    setCognome("");
+    setUsername("");
+    setError("");
+  };
+
   const handleSubmit = async () => {
     setError("");
     try {
@@ -21,30 +30,18 @@ function Login({ onRegistrando }) {
           setError("Compila tutti i campi!");
           return;
         }
-
-        // Segnala ad App.js che stiamo registrando
         onRegistrando(true);
-
         auth.languageCode = "it";
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Salva dati utente
         await setDoc(doc(db, "utenti", cred.user.uid), {
           nome, cognome, username, email, createdAt: new Date()
         });
-
-        // Manda email di verifica
         await sendEmailVerification(cred.user, {
           url: "https://circolo-tennis-chi.vercel.app"
         });
-
-        // Logout
         await signOut(auth);
-
-        // Fine registrazione
         onRegistrando(false);
         setPopup("registrato");
-
       } else {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         if (!cred.user.emailVerified) {
@@ -92,7 +89,11 @@ function Login({ onRegistrando }) {
             <p style={{ fontWeight: "bold", color: "#ffdd88" }}>{email}</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi accedi.</p>
             <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
-            <button onClick={() => { setPopup(null); setIsRegister(false); setEmail(""); setPassword(""); setNome(""); setCognome(""); setUsername(""); }} style={{
+            <button onClick={() => {
+              setPopup(null);
+              setIsRegister(false);
+              resetCampi();
+            }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",
               fontWeight: "bold", cursor: "pointer", fontSize: "15px"
@@ -109,19 +110,23 @@ function Login({ onRegistrando }) {
             <p>Hai già ricevuto una email da Firebase.</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi prova ad accedere di nuovo.</p>
             <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
-            <button onClick={() => setPopup(null)} style={{
+            <button onClick={() => {
+              setPopup(null);
+              setIsRegister(false);
+              resetCampi();
+            }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",
               fontWeight: "bold", cursor: "pointer", fontSize: "15px"
-            }}>OK, ho capito</button>
+            }}>Torna al Login</button>
           </div>
         </div>
       )}
 
-      <img src="\logo_ASD_Circolo_Tennis.png"  alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
+      <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
 
       <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
-        {isRegister ? "Registrati" : "Login"}
+        {isRegister ? "Registrati" : "Accedi"}
       </h3>
 
       {isRegister && (
@@ -146,7 +151,7 @@ function Login({ onRegistrando }) {
 
       <p style={{ textAlign: "center", marginTop: "16px" }}>
         {isRegister ? "Hai già un account?" : "Non hai un account?"}
-        <span onClick={() => { setIsRegister(!isRegister); setError(""); setPopup(null); }}
+        <span onClick={() => { setIsRegister(!isRegister); resetCampi(); setPopup(null); }}
           style={{ color: "white", fontWeight: "bold", cursor: "pointer", marginLeft: "6px", textDecoration: "underline" }}>
           {isRegister ? "Accedi" : "Registrati"}
         </span>

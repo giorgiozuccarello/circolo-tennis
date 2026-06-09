@@ -82,8 +82,7 @@ function Dashboard({ user, onLogout }) {
           alignItems: "center", justifyContent: "center", zIndex: 100
         }}>
           <div style={{
-            background: "#111111",
-            border: "2px solid white",
+            background: "#111111", border: "2px solid white",
             borderRadius: "16px", padding: "30px",
             maxWidth: "300px", width: "90%", textAlign: "center", color: "white"
           }}>
@@ -116,7 +115,7 @@ function Dashboard({ user, onLogout }) {
           position: "absolute", right: 0, top: 0,
           padding: "6px 14px", cursor: "pointer", borderRadius: "8px"
         }}>Esci</button>
-        <img src="\logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
+        <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
       </div>
 
       {/* Selettore Campo */}

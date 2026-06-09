@@ -8,7 +8,6 @@ function Login({ onRegistrando }) {
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
   const [cognome, setCognome] = useState("");
-  const [username, setUsername] = useState("");
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
   const [popup, setPopup] = useState(null);
@@ -18,7 +17,6 @@ function Login({ onRegistrando }) {
     setPassword("");
     setNome("");
     setCognome("");
-    setUsername("");
     setError("");
   };
 
@@ -26,7 +24,7 @@ function Login({ onRegistrando }) {
     setError("");
     try {
       if (isRegister) {
-        if (!nome || !cognome || !username) {
+        if (!nome || !cognome) {
           setError("Compila tutti i campi!");
           return;
         }
@@ -34,7 +32,7 @@ function Login({ onRegistrando }) {
         auth.languageCode = "it";
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, "utenti", cred.user.uid), {
-          nome, cognome, username, email, createdAt: new Date()
+          nome, cognome, email, createdAt: new Date()
         });
         await sendEmailVerification(cred.user, {
           url: "https://circolo-tennis-chi.vercel.app"
@@ -133,7 +131,6 @@ function Login({ onRegistrando }) {
         <>
           <input placeholder="Nome" value={nome} onChange={e => setNome(e.target.value)} style={inputStyle} />
           <input placeholder="Cognome" value={cognome} onChange={e => setCognome(e.target.value)} style={inputStyle} />
-          <input placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} style={inputStyle} />
         </>
       )}
 

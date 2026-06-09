@@ -19,11 +19,24 @@ function Dashboard({ user, onLogout }) {
   const [prenotazioni, setPrenotazioni] = useState([]);
   const [loading, setLoading] = useState(false);
   const [conferma, setConferma] = useState(null);
+  const [nomeUtente, setNomeUtente] = useState("");
+
+  useEffect(() => {
+    caricaNome();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     loadPrenotazioni();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campo, data]);
+
+  const caricaNome = async () => {
+    const userDoc = await getDoc(doc(db, "utenti", user.uid));
+    if (userDoc.exists()) {
+      setNomeUtente(userDoc.data().nome);
+    }
+  };
 
   const loadPrenotazioni = async () => {
     setLoading(true);
@@ -40,11 +53,11 @@ function Dashboard({ user, onLogout }) {
 
   const prenota = async (ora) => {
     const userDoc = await getDoc(doc(db, "utenti", user.uid));
-    const username = userDoc.exists() ? userDoc.data().username : user.email;
+    const cognome = userDoc.exists() ? userDoc.data().cognome : user.email;
     await addDoc(collection(db, "prenotazioni"), {
       userId: user.uid,
       email: user.email,
-      nome: username,
+      nome: cognome,
       campo,
       data,
       ora,
@@ -109,14 +122,19 @@ function Dashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* Header con logo centrato e tasto Esci */}
-      <div style={{ textAlign: "center", marginBottom: "20px", position: "relative" }}>
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: "10px", position: "relative" }}>
         <button onClick={onLogout} style={{
           position: "absolute", right: 0, top: 0,
           padding: "6px 14px", cursor: "pointer", borderRadius: "8px"
         }}>Esci</button>
         <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
       </div>
+
+      {/* Nome utente loggato */}
+      <p style={{ textAlign: "center", fontSize: "16px", marginBottom: "16px" }}>
+        Benvenuto, <strong>{nomeUtente}</strong>!
+      </p>
 
       {/* Selettore Campo */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "16px" }}>

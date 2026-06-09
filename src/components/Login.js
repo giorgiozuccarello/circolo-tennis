@@ -121,7 +121,7 @@ function Login({ onRegistrando }) {
       <img src="/logo_ASD_Circolo_Tennis.jpeg"  alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
 
       <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
-        {isRegister ? "Registrati" : "Accedi"}
+        {isRegister ? "Registrati" : "Login"}
       </h3>
 
       {isRegister && (

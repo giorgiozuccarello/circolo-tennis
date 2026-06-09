@@ -116,7 +116,7 @@ function Dashboard({ user, onLogout }) {
           position: "absolute", right: 0, top: 0,
           padding: "6px 14px", cursor: "pointer", borderRadius: "8px"
         }}>Esci</button>
-        <img src="/logo_ASD_Circolo_Tennis.jpeg" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
+        <img src="\logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
       </div>
 
       {/* Selettore Campo */}

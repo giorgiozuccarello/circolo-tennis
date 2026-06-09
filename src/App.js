@@ -11,16 +11,28 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      // Se stiamo registrando, ignora qualsiasi cambio di stato
       if (registrando) {
         setLoading(false);
         return;
       }
-      if (currentUser && !currentUser.emailVerified) {
-        await signOut(auth);
-        setUser(null);
+
+      if (currentUser) {
+        // Ricarica il profilo utente direttamente da Firebase
+        // per avere lo stato emailVerified aggiornato
+        await currentUser.reload();
+        const refreshed = auth.currentUser;
+
+        if (!refreshed || !refreshed.emailVerified) {
+          await signOut(auth);
+          setUser(null);
+        } else {
+          setUser(refreshed);
+        }
       } else {
-        setUser(currentUser);
+        setUser(null);
       }
+
       setLoading(false);
     });
     return unsubscribe;

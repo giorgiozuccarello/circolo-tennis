@@ -3,7 +3,7 @@ import { auth, db } from "../firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
-function Login() {
+function Login({ onRegistrando }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
@@ -21,11 +21,12 @@ function Login() {
           setError("Compila tutti i campi!");
           return;
         }
+
+        // Segnala ad App.js che stiamo registrando
+        onRegistrando(true);
+
         auth.languageCode = "it";
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Logout IMMEDIATO
-        await signOut(auth);
 
         // Salva dati utente
         await setDoc(doc(db, "utenti", cred.user.uid), {
@@ -37,6 +38,11 @@ function Login() {
           url: "https://circolo-tennis-chi.vercel.app"
         });
 
+        // Logout
+        await signOut(auth);
+
+        // Fine registrazione
+        onRegistrando(false);
         setPopup("registrato");
 
       } else {
@@ -48,6 +54,7 @@ function Login() {
         }
       }
     } catch (err) {
+      onRegistrando(false);
       setError(err.message);
     }
   };

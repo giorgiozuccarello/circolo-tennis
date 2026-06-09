@@ -13,6 +13,11 @@ const getFine = (ora) => {
   return m === 30 ? `${String(h+1).padStart(2,"0")}:00` : `${String(h).padStart(2,"0")}:30`;
 };
 
+const capitalizza = (str) => {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 const getMeteoIcona = (weatherId) => {
   if (!weatherId) return "⛅";
   if (weatherId >= 200 && weatherId < 300) return "⛈️";
@@ -39,15 +44,12 @@ const Lampadina = ({ accesa }) => (
   </svg>
 );
 
-// Trova la previsione più vicina all'ora richiesta
 const getMeteoPerOra = (forecast, dataSelezionata, ora) => {
   if (!forecast || forecast.length === 0) return null;
   const [h] = ora.split(":").map(Number);
   const target = new Date(`${dataSelezionata}T${String(h).padStart(2,"0")}:00:00`);
-  
   let closest = null;
   let minDiff = Infinity;
-  
   forecast.forEach(item => {
     const itemDate = new Date(item.dt * 1000);
     const diff = Math.abs(itemDate - target);
@@ -56,7 +58,6 @@ const getMeteoPerOra = (forecast, dataSelezionata, ora) => {
       closest = item;
     }
   });
-  
   return closest;
 };
 
@@ -112,7 +113,7 @@ function Dashboard({ user, onLogout }) {
 
   const prenota = async (ora) => {
     const userDoc = await getDoc(doc(db, "utenti", user.uid));
-    const cognome = userDoc.exists() ? userDoc.data().cognome : user.email;
+    const cognome = userDoc.exists() ? capitalizza(userDoc.data().cognome) : user.email;
     await addDoc(collection(db, "prenotazioni"), {
       userId: user.uid,
       email: user.email,
@@ -183,14 +184,16 @@ function Dashboard({ user, onLogout }) {
       <div style={{ textAlign: "center", marginBottom: "10px", position: "relative" }}>
         <button onClick={onLogout} style={{
           position: "absolute", right: 0, top: 0,
-          padding: "6px 14px", cursor: "pointer", borderRadius: "8px"
+          padding: "6px 14px", cursor: "pointer", borderRadius: "8px",
+          background: "#1a5c1a", color: "white", border: "none",
+          fontWeight: "bold", fontSize: "14px"
         }}>Esci</button>
-        <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "100px", display: "block", margin: "0 auto" }} />
+        <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ height: "120px", display: "block", margin: "0 auto" }} />
       </div>
 
       {/* Nome utente */}
       <p style={{ textAlign: "center", fontSize: "16px", marginBottom: "16px" }}>
-        Benvenuto, <strong>{nomeUtente}</strong>!
+        Benvenuto, <strong>{capitalizza(nomeUtente)}</strong>!
       </p>
 
       {/* Selettore Campo */}
@@ -232,27 +235,27 @@ function Dashboard({ user, onLogout }) {
               <div key={ora} onClick={() => handleClick(ora, slot, mio)} style={{
                 display: "flex", alignItems: "center",
                 background: prenotato ? (mio ? "#2d7a2d" : "#7a2d2d") : "rgba(255,255,255,0.15)",
-                borderRadius: "10px", padding: "10px 14px",
+                borderRadius: "10px", padding: "8px 12px",
                 cursor: prenotato && !mio ? "default" : "pointer",
-                gap: "6px"
+                gap: "2px"
               }}>
                 {/* Icona Meteo */}
-                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
+                <span style={{ fontSize: "16px", minWidth: "20px", textAlign: "center" }}>
                   {meteoOra ? getMeteoIcona(meteoOra.weather[0].id) : "⛅"}
                 </span>
 
                 {/* Icona Vento */}
-                <span style={{ fontSize: "18px", minWidth: "24px", textAlign: "center" }}>
+                <span style={{ fontSize: "16px", minWidth: "20px", textAlign: "center" }}>
                   {meteoOra ? getFrecciaVento(meteoOra.wind.deg) : "→"}
                 </span>
 
                 {/* Icona Luce */}
-                <span style={{ minWidth: "24px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ minWidth: "20px", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Lampadina accesa={luceAccesa} />
                 </span>
 
                 {/* Spazio separatore */}
-                <span style={{ minWidth: "14px" }} />
+                <span style={{ minWidth: "6px" }} />
 
                 {/* Orario */}
                 <span style={{ fontWeight: "bold", minWidth: "110px", fontSize: "15px" }}>

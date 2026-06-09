@@ -87,11 +87,7 @@ function Login({ onRegistrando }) {
             <p style={{ fontWeight: "bold", color: "#ffdd88" }}>{email}</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi accedi.</p>
             <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
-            <button onClick={() => {
-              setPopup(null);
-              setIsRegister(false);
-              resetCampi();
-            }} style={{
+            <button onClick={() => { setPopup(null); setIsRegister(false); resetCampi(); }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",
               fontWeight: "bold", cursor: "pointer", fontSize: "15px"
@@ -108,11 +104,7 @@ function Login({ onRegistrando }) {
             <p>Hai già ricevuto una email da Firebase.</p>
             <p>Clicca sul link nella email per attivare il tuo account, poi prova ad accedere di nuovo.</p>
             <p style={{ fontSize: "13px", color: "#aaa" }}>Controlla anche la cartella spam.</p>
-            <button onClick={() => {
-              setPopup(null);
-              setIsRegister(false);
-              resetCampi();
-            }} style={{
+            <button onClick={() => { setPopup(null); setIsRegister(false); resetCampi(); }} style={{
               marginTop: "16px", padding: "10px 24px", borderRadius: "8px",
               border: "none", background: "white", color: "#111111",
               fontWeight: "bold", cursor: "pointer", fontSize: "15px"
@@ -121,7 +113,7 @@ function Login({ onRegistrando }) {
         </div>
       )}
 
-      <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "220px" }} />
+      <img src="/logo_ASD_Circolo_Tennis.png" alt="Logo" style={{ display: "block", margin: "0 auto 20px", width: "260px" }} />
 
       <h3 style={{ textAlign: "center", marginBottom: "20px" }}>
         {isRegister ? "Registrati" : "Accedi"}
